@@ -64,3 +64,14 @@ export const toggleFavorite = async (slug: string) => {
     throw error;
   }
 };
+
+export const logoutUser = async () => {
+  try {
+    const response = await API.post("/auth/logout");
+    localStorage.removeItem("token"); // Clear the token from localStorage
+    return response;
+  } catch (error) {
+    console.error("Failed to logout:", error);
+    throw error;
+  }
+};

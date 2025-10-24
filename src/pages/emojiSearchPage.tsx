@@ -6,9 +6,16 @@ import EmojiGrid from "../components/EmojiGrid";
 import { useDebounce } from "../hooks/useDebounce";
 import Fuse from "fuse.js";
 import type { IFuseOptions } from "fuse.js";
-import { getEmojis, getFavorites, toggleFavorite } from "../services/api";
+import {
+  getEmojis,
+  getFavorites,
+  toggleFavorite,
+  logoutUser,
+} from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 export default function EmojiSearchPage() {
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const debouncedQ = useDebounce(q, 250);
   const [emojis, setEmojis] = useState<EmojiItem[]>([]);
@@ -42,6 +49,16 @@ export default function EmojiSearchPage() {
 
     fetchInitialData();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate("/login");
+    } catch (error) {
+      console.error("Failed to logout:", error);
+      setError("Failed to logout. Please try again.");
+    }
+  };
 
   const fuse = useMemo(() => {
     const options: IFuseOptions<EmojiItem> = {
@@ -113,9 +130,10 @@ export default function EmojiSearchPage() {
   }
 
   return (
-    <div className="app">
+    <div>
       <header className="header">
         <h1>Emoji Search</h1>
+        <button onClick={handleLogout}>Logout</button>
         <div className="controls">
           <SearchBar value={q} onChange={setQ} />
           <label className="favorites-toggle">
