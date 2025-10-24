@@ -5,6 +5,14 @@ const API = axios.create({
   withCredentials: true,
 });
 
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export interface RegisterData {
   username: string;
   email: string;
@@ -19,13 +27,40 @@ export interface LoginData {
 export const registerUser = (data: RegisterData) =>
   API.post("/auth/register", data);
 export const loginUser = (data: LoginData) => API.post("/auth/login", data);
-export const getEmojis = () => API.get("/emoji");
-console.log("Emojis ====>", getEmojis);
-export const getFavorites = () => API.get("/favorites");
-console.log("Favorites ====>", getFavorites);
-export const toggleFavorite = (slug: string) =>
-  API.post(
-    "/favorites/toggle",
-    { slug },
-    { headers: { "Content-Type": "application/json" } }
-  );
+
+export const getEmojis = async () => {
+  const response = await API.get("/emoji");
+  console.log("Emojis data ====>", response.data);
+  return response;
+};
+
+export const getFavorites = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No auth token found");
+    }
+
+    const response = await API.get("/favorites");
+    console.log("Favorites data for authenticated user:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Failed to fetch favorites:", error);
+    throw error;
+  }
+};
+export const toggleFavorite = async (slug: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No auth token found");
+    }
+
+    const response = await API.post("/favorites/toggle", { slug });
+    console.log("Toggle favorite response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Failed to toggle favorite:", error);
+    throw error;
+  }
+};
