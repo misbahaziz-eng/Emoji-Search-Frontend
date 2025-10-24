@@ -1,1 +1,1 @@
-# Emoji-Search---Full-Stack
+# Emoji-Search---Frontend
