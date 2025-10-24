@@ -76,7 +76,11 @@ export default function EmojiSearchPage() {
 
   // Filter favorites based on showFavorites toggle
   const displayedEmojis = useMemo(() => {
-    if (showFavorites) {
+    if (showFavorites && favorites.size === 0) {
+      // If favorites toggle is on but there are no favorites, return empty array
+      return [];
+    } else if (showFavorites) {
+      // If favorites toggle is on and there are favorites, filter them
       return searchResults.filter((emoji) => favorites.has(emoji.slug));
     }
     return searchResults;
@@ -91,13 +95,12 @@ export default function EmojiSearchPage() {
           getFavorites(),
         ]);
 
-        // Add defensive check for null/undefined favorites
         const favoritesList = favsRes.data?.favorites || [];
         console.log("Favorites response:", favsRes.data);
         console.log("Favorites list:", favoritesList);
 
         setEmojis(emojisRes.data);
-        setFavorites(new Set(favoritesList)); // Use the safe list
+        setFavorites(new Set(favoritesList));
         setError(null);
       } catch (err) {
         console.error("Failed to load initial data:", err);

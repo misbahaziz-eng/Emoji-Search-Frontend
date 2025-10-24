@@ -34,16 +34,16 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50">
-      <div className="bg-white shadow-md rounded-2xl p-8 w-96">
-        <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
-        <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+    <div className="auth-container">
+      <div className="auth-card">
+        <h2>Login</h2>
+        <form onSubmit={handleSubmit} className="auth-form">
           <input
             type="email"
             placeholder="Email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="border rounded-lg px-3 py-2"
+            className="auth-input"
             required
           />
           <input
@@ -51,25 +51,18 @@ export default function Login() {
             placeholder="Password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="border rounded-lg px-3 py-2"
+            className="auth-input"
             required
           />
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
-          >
+          <button type="submit" disabled={loading} className="auth-btn">
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-        {message && (
-          <p className="text-center mt-3 text-gray-700 text-sm">{message}</p>
-        )}
-        <p className="text-sm text-center mt-4">
-          Don’t have an account?{" "}
-          <a href="/register" className="text-blue-600 hover:underline">
-            Register
-          </a>
+
+        {message && <p className="auth-message">{message}</p>}
+
+        <p className="auth-footer">
+          Don’t have an account? <a href="/register">Register</a>
         </p>
       </div>
     </div>
