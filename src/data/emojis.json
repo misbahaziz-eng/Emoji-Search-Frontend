@@ -1,0 +1,38 @@
+[
+  {
+    "slug": "grinning",
+    "emoji": "😀",
+    "name": "Grinning Face",
+    "keywords": ["face", "grin", "smile"]
+  },
+  {
+    "slug": "joy",
+    "emoji": "😂",
+    "name": "Face with Tears of Joy",
+    "keywords": ["face", "tears", "joy", "laugh"]
+  },
+  {
+    "slug": "thumbs_up",
+    "emoji": "👍",
+    "name": "Thumbs Up",
+    "keywords": ["hand", "thumb", "like", "approve"]
+  },
+  {
+    "slug": "red_heart",
+    "emoji": "❤️",
+    "name": "Red Heart",
+    "keywords": ["heart", "love"]
+  },
+  {
+    "slug": "fire",
+    "emoji": "🔥",
+    "name": "Fire",
+    "keywords": ["flame", "hot", "lit"]
+  },
+  {
+    "slug": "party_popper",
+    "emoji": "🎉",
+    "name": "Party Popper",
+    "keywords": ["party", "celebrate", "congrats"]
+  }
+]
