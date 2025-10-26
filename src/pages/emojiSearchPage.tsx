@@ -24,7 +24,6 @@ export default function EmojiSearchPage() {
   const [showFavorites, setShowFavorites] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  // Fetch both emojis and favorites on component mount
   useEffect(() => {
     async function fetchInitialData() {
       setLoading(true);
