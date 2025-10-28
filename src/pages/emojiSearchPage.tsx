@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import "../styles/main.css";
+import "../index.css";
 import type { EmojiItem } from "../types";
-import SearchBar from "../components/SearchBar";
-import EmojiGrid from "../components/EmojiGrid";
 import { useDebounce } from "../hooks/useDebounce";
 import Fuse from "fuse.js";
 import type { IFuseOptions } from "fuse.js";
@@ -13,6 +11,14 @@ import {
   logoutUser,
 } from "../services/api";
 import { useNavigate } from "react-router-dom";
+
+// ✅ Shadcn components
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 export default function EmojiSearchPage() {
   const navigate = useNavigate();
@@ -32,11 +38,8 @@ export default function EmojiSearchPage() {
           getEmojis(),
           getFavorites(),
         ]);
-        console.log("Favorites response:", favsRes.data);
-        console.log("Favorites list:", favsRes.data.favorites);
-
         setEmojis(emojisRes.data);
-        setFavorites(new Set(favsRes.data.favorites));
+        setFavorites(new Set(favsRes.data?.favorites || []));
         setError(null);
       } catch (err) {
         console.error("Failed to load initial data:", err);
@@ -45,7 +48,6 @@ export default function EmojiSearchPage() {
         setLoading(false);
       }
     }
-
     fetchInitialData();
   }, []);
 
@@ -73,45 +75,14 @@ export default function EmojiSearchPage() {
     return fuse.search(debouncedQ).map((r) => r.item);
   }, [debouncedQ, fuse, emojis]);
 
-  // Filter favorites based on showFavorites toggle
   const displayedEmojis = useMemo(() => {
-    if (showFavorites && favorites.size === 0) {
-      // If favorites toggle is on but there are no favorites, return empty array
-      return [];
-    } else if (showFavorites) {
-      // If favorites toggle is on and there are favorites, filter them
+    if (showFavorites && favorites.size === 0) return [];
+    if (showFavorites) {
       return searchResults.filter((emoji) => favorites.has(emoji.slug));
     }
     return searchResults;
   }, [searchResults, showFavorites, favorites]);
 
-  useEffect(() => {
-    async function fetchInitialData() {
-      setLoading(true);
-      try {
-        const [emojisRes, favsRes] = await Promise.all([
-          getEmojis(),
-          getFavorites(),
-        ]);
-
-        const favoritesList = favsRes.data?.favorites || [];
-        console.log("Favorites response:", favsRes.data);
-        console.log("Favorites list:", favoritesList);
-
-        setEmojis(emojisRes.data);
-        setFavorites(new Set(favoritesList));
-        setError(null);
-      } catch (err) {
-        console.error("Failed to load initial data:", err);
-        setError("Failed to load emojis. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchInitialData();
-  }, []);
-  // Also update the toggle handler to be more defensive
   async function handleToggleFavorite(slug: string) {
     try {
       const res = await toggleFavorite(slug);
@@ -124,44 +95,113 @@ export default function EmojiSearchPage() {
   }
 
   if (loading) {
-    return <div className="loading">Loading emojis...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center text-lg text-muted-foreground">
+        Loading emojis...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="error">{error}</div>;
+    return (
+      <div className="flex h-screen items-center justify-center text-red-400">
+        {error}
+      </div>
+    );
   }
 
   return (
-    <div>
-      <header className="header">
-        <h1>Emoji Search</h1>
-        <button onClick={handleLogout}>Logout</button>
-        <div className="controls">
-          <SearchBar value={q} onChange={setQ} />
-          <label className="favorites-toggle">
-            <input
-              type="checkbox"
-              checked={showFavorites}
-              onChange={(e) => setShowFavorites(e.target.checked)}
-            />
-            Favorites only ({favorites.size})
-          </label>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-[#060621] to-[#0d0d32] text-white p-6">
+      <Card className="max-w-6xl mx-auto shadow-lg bg-[#111133]/60 backdrop-blur-md border-[#222255]/50">
+        <CardContent className="p-6 space-y-6">
+          <header className="flex items-center justify-between flex-wrap gap-3">
+            <h1 className="text-2xl font-semibold">Emoji Search</h1>
+            <div className="space-x-2 flex-shrink-0">
+              <Button
+                variant="outline"
+                className="border-[#5555aa]/60 text-white"
+                onClick={handleLogout}
+              >
+                Logout
+              </Button>
+              <Button onClick={() => navigate("/post")}>Create Post</Button>
+            </div>
+          </header>
 
-      <main>
-        {displayedEmojis.length === 0 ? (
-          <p className="no-results">
-            {showFavorites ? "No favorite emojis yet!" : "No emojis found"}
-          </p>
-        ) : (
-          <EmojiGrid
-            items={displayedEmojis}
-            favorites={favorites}
-            onToggleFavorite={handleToggleFavorite}
-          />
-        )}
-      </main>
+          <Separator className="bg-[#333366]/40" />
+
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex-1 min-w-[250px]">
+              <Input
+                type="text"
+                placeholder="Search emojis..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className="bg-[#0a0a28] border-[#333366] text-white placeholder:text-gray-400"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={showFavorites}
+                onCheckedChange={setShowFavorites}
+                id="favorites-switch"
+              />
+              <Label
+                htmlFor="favorites-switch"
+                className="text-sm text-gray-300"
+              >
+                Favorites only ({favorites.size})
+              </Label>
+            </div>
+          </div>
+
+          {/* ✅ Emoji Cards Grid */}
+          <main className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6">
+            {displayedEmojis.length === 0 ? (
+              <p className="col-span-full text-center text-gray-400">
+                {showFavorites ? "No favorite emojis yet!" : "No emojis found"}
+              </p>
+            ) : (
+              displayedEmojis.map((emoji) => {
+                // ✅ Handle possible key variations (character, emoji, symbol)
+                const emojiChar =
+                  (emoji as any).character ||
+                  (emoji as any).emoji ||
+                  (emoji as any).symbol ||
+                  "❓";
+
+                return (
+                  <Card
+                    key={emoji.slug}
+                    className="bg-[#1a1a3d]/60 border-[#333366]/40 text-white hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+                  >
+                    <CardContent className="p-4 flex flex-col items-center text-center">
+                      <div className="text-5xl mb-3">{emojiChar}</div>
+                      <h3 className="text-base font-medium mb-2">
+                        {emoji.name}
+                      </h3>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleToggleFavorite(emoji.slug)}
+                        className={`text-sm ${
+                          favorites.has(emoji.slug)
+                            ? "text-yellow-400"
+                            : "text-gray-400"
+                        } hover:text-yellow-300`}
+                      >
+                        {favorites.has(emoji.slug)
+                          ? "★ Favorite"
+                          : "☆ Add Favorite"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </main>
+        </CardContent>
+      </Card>
     </div>
   );
 }

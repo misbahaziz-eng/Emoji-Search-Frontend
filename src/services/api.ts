@@ -75,3 +75,11 @@ export const logoutUser = async () => {
     throw error;
   }
 };
+
+export const getPosts = () => API.get("/posts");
+export const createPost = (content: string) => API.post("/posts", { content });
+export const updatePost = (id: string, content: string) =>
+  API.put(`/posts/${id}`, { content });
+export const deletePost = (id: string) => API.delete(`/posts/${id}`);
+export const reactToPost = (id: string, emoji: string) =>
+  API.post(`/posts/${id}/react`, { emoji });

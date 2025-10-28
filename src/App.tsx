@@ -4,6 +4,8 @@ import Login from "./pages/login";
 import Register from "./pages/register";
 import EmojiSearchPage from "./pages/emojiSearchPage"; // renamed from EmojiApp for clarity
 import type { JSX } from "react";
+import PostPage from "./pages/post";
+import { Toaster } from "sonner";
 
 // 🔒 ProtectedRoute — ensures only logged-in users can access emoji search page
 function ProtectedRoute({ children }: { children: JSX.Element }) {
@@ -36,7 +38,9 @@ export default function App() {
 
         {/* 🚀 Default route: redirect to login */}
         <Route path="*" element={<Login />} />
+        <Route path="/post" element={<PostPage />} />
       </Routes>
+      <Toaster position="top-right" richColors closeButton />
     </BrowserRouter>
   );
 }
