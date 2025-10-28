@@ -64,16 +64,52 @@ export default function PostPage() {
       : [];
 
   // Replace/merge one updated post into posts array (normalizing reactions)
+  // --- In PostPage.tsx ---
+
   const mergeUpdatedPost = (updated: Post) => {
-    const normalized: Post = {
-      ...updated,
-      reactions: normalizeReactions(updated.reactions),
-    };
-    setPosts((prev) =>
-      prev.map((p) => (p._id === normalized._id ? normalized : p))
+    setPosts((prevPosts) =>
+      prevPosts.map((p) => {
+        if (p._id !== updated._id) return p;
+
+        const normalizedIncomingReactions =
+          normalizeReactions(updated.reactions) || [];
+        const currentReactions = p.reactions || [];
+
+        // Create a map of current reactions for quick lookup and modification
+        const nextReactionsMap = new Map(
+          currentReactions.map((r) => [r.emoji, { ...r }])
+        );
+
+        // 🔥 FIX 2: ITERATE OVER INCOMING REACTIONS AND MERGE DEFENSIVELY
+        for (const incomingR of normalizedIncomingReactions) {
+          const currentR = nextReactionsMap.get(incomingR.emoji);
+
+          const incomingCount = incomingR.users.length;
+          const currentCount = currentR?.users.length ?? 0;
+
+          if (incomingCount > currentCount) {
+            // If the incoming count is HIGHER, merge the entire reaction object (new users)
+            nextReactionsMap.set(incomingR.emoji, incomingR);
+          } else if (!currentR) {
+            // If the reaction doesn't exist locally, add it.
+            nextReactionsMap.set(incomingR.emoji, incomingR);
+          }
+          // If incomingCount <= currentCount, we skip the merge for this emoji
+          // to protect the newer, higher count from another user's action.
+        }
+
+        const safelyMergedReactions = Array.from(nextReactionsMap.values());
+
+        // Merge the rest of the post data
+        return {
+          ...p,
+          ...updated, // Aggressive merge for non-reaction fields (content, etc.)
+          reactions: safelyMergedReactions, // Use the defensively merged reactions
+          createdBy: updated.createdBy || p.createdBy, // Keep createdBy populated
+        };
+      })
     );
   };
-
   // ----------------------
   // Fetch initial data
   // ----------------------
@@ -96,6 +132,7 @@ export default function PostPage() {
         const user = localStorage.getItem("user");
         if (user && user !== "undefined") {
           try {
+            console.log("User data from localStorage:", user);
             const parsedUser = JSON.parse(user);
             if (parsedUser?._id) {
               setUserId(parsedUser._id);
@@ -156,15 +193,26 @@ export default function PostPage() {
   // ----------------------
   const reacting = useRef(new Set<string>()); // prevent spam reactions
 
+  // --- In PostPage.tsx ---
+
+  // --- In PostPage.tsx ---
+
   async function handleReact(postId: string, emoji: string) {
-    if (!userId) {
-      console.warn("User not logged in - can't react");
-      return;
-    }
+    // ... (omitted boilerplate and spam prevention) ...
 
     const key = `${postId}-${emoji}`;
-    if (reacting.current.has(key)) return; // prevent rapid double clicks
+
+    if (reacting.current.has(key)) return;
     reacting.current.add(key);
+
+    // 🔥 FIX 1: DETERMINE TOGGLE-OFF STATE BEFORE setPosts
+    const currentPost = posts.find((p) => p._id === postId);
+    const currentReaction = currentPost?.reactions?.find(
+      (r) => r.emoji === emoji
+    );
+    const isTogglingOff = currentReaction?.users.map(String).includes(userId);
+    // If the user's ID is currently in the reaction list, this click is a REMOVE (true).
+    // Otherwise, it's an ADD (false).
 
     // ✅ Optimistic UI update
     setPosts((prevPosts) =>
@@ -173,16 +221,18 @@ export default function PostPage() {
         const reactions = (p.reactions || []).map((r) => ({ ...r }));
 
         const idx = reactions.findIndex((r) => r.emoji === emoji);
+
+        // The toggling logic here is now ONLY for the UI update
         if (idx === -1) {
-          // add new reaction
           reactions.push({ emoji, users: [userId] });
         } else {
           const usersSet = new Set(reactions[idx].users.map(String));
           if (usersSet.has(userId)) {
-            usersSet.delete(userId); // toggle off
+            usersSet.delete(userId); // REMOVE reaction
           } else {
-            usersSet.add(userId); // toggle on
+            usersSet.add(userId); // ADD reaction
           }
+
           const arr = Array.from(usersSet);
           if (arr.length === 0) {
             reactions.splice(idx, 1);
@@ -200,20 +250,13 @@ export default function PostPage() {
     try {
       const res = await reactToPost(postId, emoji);
       if (res?.data) {
-        mergeUpdatedPost(res.data); // safe merge (prevents count drop)
+        // 💯 Conditional Merge: Skip merge if we just removed a reaction
+        if (!isTogglingOff) {
+          mergeUpdatedPost(res.data);
+        }
       }
     } catch (err) {
-      console.error("Error reacting to post:", err);
-      try {
-        const fresh = await getPosts();
-        const normalizedPosts: Post[] = (fresh.data || []).map((p: Post) => ({
-          ...p,
-          reactions: normalizeReactions(p.reactions),
-        }));
-        setPosts(normalizedPosts);
-      } catch (e) {
-        console.error("Failed to reload posts after react error:", e);
-      }
+      // ... (omitted error handling) ...
     } finally {
       reacting.current.delete(key);
       setShowPickerFor(null);
@@ -241,13 +284,13 @@ export default function PostPage() {
           placeholder="Write something..."
           value={newContent}
           onChange={(e) => setNewContent(e.target.value)}
-          className="w-full md:w-2/3 p-3 bg-[#1a1f2f] rounded-lg text-white focus:outline-none resize-none"
+          className="w-full md:w-full p-3 bg-[#1a1f2f] rounded-lg text-white focus:outline-none resize-none"
         />
         <button
           onClick={handleCreatePost}
           className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition"
         >
-          Create New Post
+          + Post
         </button>
       </div>
 
@@ -309,16 +352,32 @@ export default function PostPage() {
                 {post.reactions?.map((r, i) => {
                   const count = r.users?.length ?? 0;
                   if (count === 0) return null; // don't show empty reactions
+
+                  // 🎯 Check if the logged-in user has reacted with this emoji
+                  const userHasReacted = r.users?.includes(userId || "");
+
+                  // 🎯 Conditional styling for the active reaction
+                  const buttonClass = userHasReacted
+                    ? "bg-blue-600 text-white px-3 py-1 rounded-full hover:bg-blue-700 transition flex items-center gap-2 shadow-lg" // Active blue style
+                    : "bg-[#2a2f3f] px-3 py-1 rounded-full hover:bg-[#3a3f4f] transition flex items-center gap-2"; // Default dark style
+
                   return (
                     <button
                       key={`${post._id}-${r.emoji}-${i}`}
                       onClick={() => handleReact(post._id, r.emoji)}
-                      className="bg-[#2a2f3f] px-3 py-1 rounded-full hover:bg-[#3a3f4f] transition flex items-center gap-2"
-                      aria-pressed={r.users?.includes(userId || "")}
+                      className={buttonClass}
+                      aria-pressed={userHasReacted}
                       title={`${r.emoji} — ${count}`}
                     >
                       <span>{r.emoji}</span>
-                      <span className="text-sm text-gray-400">{count}</span>
+                      {/* Count text is white when active (for contrast) and gray when inactive */}
+                      <span
+                        className={`text-sm ${
+                          userHasReacted ? "text-white" : "text-gray-400"
+                        }`}
+                      >
+                        {count}
+                      </span>
                     </button>
                   );
                 })}
@@ -357,7 +416,7 @@ export default function PostPage() {
                             aria-label={`React with ${symbol}`}
                             className="inline-flex items-center justify-center text-[26px] leading-none m-1 p-1.5 rounded-md transition transform hover:scale-110 focus:scale-110 focus:outline-none"
                           >
-                            <span className="inline-block w-10 h-10 rounded-md flex items-center justify-center bg-[#2a2f3f] text-white">
+                            <span className="inline-block w-10 h-10 rounded-md items-center justify-center bg-[#2a2f3f] text-white">
                               {symbol}
                             </span>
                           </button>
