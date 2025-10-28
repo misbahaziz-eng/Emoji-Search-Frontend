@@ -46,10 +46,10 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6">
-      <Card className="w-full max-w-md p-6 shadow-xl border border-amber-200 bg-gradient-to-br from-amber-100 to-orange-50 text-gray-900 rounded-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-6">
+      <Card className="w-full max-w-md p-6 shadow-2xl bg-slate-800/80 backdrop-blur-sm border border-indigo-700/50 text-white rounded-xl">
         <CardHeader>
-          <CardTitle className="text-center text-3xl font-bold text-amber-800">
+          <CardTitle className="text-center text-3xl font-bold text-cyan-400">
             Login
           </CardTitle>
         </CardHeader>
@@ -57,7 +57,7 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-amber-900 font-semibold">
+              <Label htmlFor="email" className="text-gray-300 font-semibold">
                 Email
               </Label>
               <Input
@@ -66,16 +66,13 @@ export default function Login() {
                 placeholder="you@example.com"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="bg-white border border-amber-300 focus:border-amber-500 focus:ring-amber-500"
+                className="bg-slate-700 border border-slate-600 text-white focus:border-cyan-500 focus:ring-cyan-500 transition"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label
-                htmlFor="password"
-                className="text-amber-900 font-semibold"
-              >
+              <Label htmlFor="password" className="text-gray-300 font-semibold">
                 Password
               </Label>
               <Input
@@ -84,7 +81,7 @@ export default function Login() {
                 placeholder="••••••••"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="bg-white border border-amber-300 focus:border-amber-500 focus:ring-amber-500"
+                className="bg-slate-700 border border-slate-600 text-white focus:border-cyan-500 focus:ring-cyan-500 transition"
                 required
               />
             </div>
@@ -92,22 +89,22 @@ export default function Login() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition-all"
             >
               {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
 
           {message && (
-            <p className="mt-4 text-center text-sm text-amber-800">{message}</p>
+            <p className="mt-4 text-center text-sm text-cyan-400">{message}</p>
           )}
         </CardContent>
 
-        <CardFooter className="text-center text-sm text-amber-900">
+        <CardFooter className="text-center text-sm text-gray-400">
           Don’t have an account?{" "}
           <a
             href="/register"
-            className="text-amber-700 hover:underline ml-1 font-semibold"
+            className="text-cyan-500 hover:underline ml-1 font-semibold"
           >
             Register
           </a>

@@ -96,7 +96,7 @@ export default function EmojiSearchPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center text-lg text-muted-foreground">
+      <div className="flex h-screen items-center justify-center text-lg text-gray-400 bg-slate-900">
         Loading emojis...
       </div>
     );
@@ -104,31 +104,36 @@ export default function EmojiSearchPage() {
 
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center text-red-400">
+      <div className="flex h-screen items-center justify-center text-red-400 bg-slate-900">
         {error}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#060621] to-[#0d0d32] text-white p-6">
-      <Card className="max-w-6xl mx-auto shadow-lg bg-[#111133]/60 backdrop-blur-md border-[#222255]/50">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-indigo-950 text-white p-6">
+      <Card className="max-w-6xl mx-auto shadow-2xl bg-slate-800/70 backdrop-blur-sm border border-indigo-700/50 rounded-xl">
         <CardContent className="p-6 space-y-6">
           <header className="flex items-center justify-between flex-wrap gap-3">
-            <h1 className="text-2xl font-semibold">Emoji Search</h1>
-            <div className="space-x-2 flex-shrink-0">
+            <h1 className="text-3xl font-bold text-cyan-400">Emoji Search</h1>
+            <div className="space-x-3 flex-shrink-0">
               <Button
                 variant="outline"
-                className="border-[#5555aa]/60 text-white"
+                className="border-cyan-500/50 text-cyan-400 hover:bg-slate-700/50 transition-all"
                 onClick={handleLogout}
               >
                 Logout
               </Button>
-              <Button onClick={() => navigate("/post")}>Create Post</Button>
+              <Button
+                className="bg-cyan-600 hover:bg-cyan-700 transition-all"
+                onClick={() => navigate("/post")}
+              >
+                Create Post
+              </Button>
             </div>
           </header>
 
-          <Separator className="bg-[#333366]/40" />
+          <Separator className="bg-indigo-600/40" />
 
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex-1 min-w-[250px]">
@@ -137,7 +142,7 @@ export default function EmojiSearchPage() {
                 placeholder="Search emojis..."
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                className="bg-[#0a0a28] border-[#333366] text-white placeholder:text-gray-400"
+                className="bg-slate-700 border border-slate-600 text-white placeholder:text-gray-400 focus:border-cyan-500 transition"
               />
             </div>
 
@@ -146,6 +151,7 @@ export default function EmojiSearchPage() {
                 checked={showFavorites}
                 onCheckedChange={setShowFavorites}
                 id="favorites-switch"
+                className="data-[state=checked]:bg-cyan-600"
               />
               <Label
                 htmlFor="favorites-switch"
@@ -157,9 +163,9 @@ export default function EmojiSearchPage() {
           </div>
 
           {/* ✅ Emoji Cards Grid */}
-          <main className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6">
+          <main className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 mt-6">
             {displayedEmojis.length === 0 ? (
-              <p className="col-span-full text-center text-gray-400">
+              <p className="col-span-full text-center text-gray-400 p-6">
                 {showFavorites ? "No favorite emojis yet!" : "No emojis found"}
               </p>
             ) : (
@@ -174,11 +180,11 @@ export default function EmojiSearchPage() {
                 return (
                   <Card
                     key={emoji.slug}
-                    className="bg-[#1a1a3d]/60 border-[#333366]/40 text-white hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+                    className="bg-slate-700/50 border border-slate-600/50 text-white hover:shadow-xl hover:scale-[1.03] transition-all duration-200 rounded-lg"
                   >
                     <CardContent className="p-4 flex flex-col items-center text-center">
                       <div className="text-5xl mb-3">{emojiChar}</div>
-                      <h3 className="text-base font-medium mb-2">
+                      <h3 className="text-base font-medium mb-2 text-cyan-300">
                         {emoji.name}
                       </h3>
                       <Button
@@ -186,9 +192,9 @@ export default function EmojiSearchPage() {
                         onClick={() => handleToggleFavorite(emoji.slug)}
                         className={`text-sm ${
                           favorites.has(emoji.slug)
-                            ? "text-yellow-400"
-                            : "text-gray-400"
-                        } hover:text-yellow-300`}
+                            ? "text-yellow-400 hover:bg-slate-600/50"
+                            : "text-gray-400 hover:text-cyan-400 hover:bg-slate-600/50"
+                        }`}
                       >
                         {favorites.has(emoji.slug)
                           ? "★ Favorite"

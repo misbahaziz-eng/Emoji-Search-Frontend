@@ -38,10 +38,10 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a]">
-      <Card className="w-full max-w-md p-6 shadow-lg border border-amber-300 bg-amber-100 text-brown-900 rounded-xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-6">
+      <Card className="w-full max-w-md p-6 shadow-2xl bg-slate-800/80 backdrop-blur-sm border border-indigo-700/50 text-white rounded-xl">
         <CardHeader>
-          <CardTitle className="text-center text-2xl font-semibold text-amber-800">
+          <CardTitle className="text-center text-3xl font-bold text-cyan-400">
             Register
           </CardTitle>
         </CardHeader>
@@ -49,7 +49,7 @@ export default function Register() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-amber-800">
+              <Label htmlFor="username" className="text-gray-300 font-semibold">
                 Username
               </Label>
               <Input
@@ -58,12 +58,13 @@ export default function Register() {
                 placeholder="JohnDoe"
                 value={form.username}
                 onChange={(e) => setForm({ ...form, username: e.target.value })}
+                className="bg-slate-700 border border-slate-600 text-white focus:border-cyan-500 focus:ring-cyan-500 transition"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-amber-800">
+              <Label htmlFor="email" className="text-gray-300 font-semibold">
                 Email
               </Label>
               <Input
@@ -72,12 +73,13 @@ export default function Register() {
                 placeholder="you@example.com"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="bg-slate-700 border border-slate-600 text-white focus:border-cyan-500 focus:ring-cyan-500 transition"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-amber-800">
+              <Label htmlFor="password" className="text-gray-300 font-semibold">
                 Password
               </Label>
               <Input
@@ -86,6 +88,7 @@ export default function Register() {
                 placeholder="••••••••"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
+                className="bg-slate-700 border border-slate-600 text-white focus:border-cyan-500 focus:ring-cyan-500 transition"
                 required
               />
             </div>
@@ -93,22 +96,22 @@ export default function Register() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-amber-600 hover:bg-amber-700 text-white transition-all"
+              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white transition-all"
             >
               {loading ? "Registering..." : "Register"}
             </Button>
           </form>
 
           {message && (
-            <p className="mt-4 text-center text-sm text-amber-800">{message}</p>
+            <p className="mt-4 text-center text-sm text-cyan-400">{message}</p>
           )}
         </CardContent>
 
-        <CardFooter className="text-center text-sm text-amber-700">
+        <CardFooter className="text-center text-sm text-gray-400">
           Already have an account?{" "}
           <a
             href="/login"
-            className="text-amber-900 font-semibold hover:underline ml-1"
+            className="text-cyan-500 font-semibold hover:underline ml-1"
           >
             Login
           </a>

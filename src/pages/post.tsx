@@ -16,7 +16,7 @@ interface Reaction {
 interface Post {
   _id: string;
   content: string;
-  createdBy?: { _id?: string } | string | null;
+  createdBy?: { _id?: string; username?: string } | string | null;
   reactions?: Reaction[];
 }
 
@@ -197,8 +197,9 @@ export default function PostPage() {
 
   // --- In PostPage.tsx ---
 
+  // From line 249:
   async function handleReact(postId: string, emoji: string) {
-    // ... (omitted boilerplate and spam prevention) ...
+    if (!userId) return; // Must be logged in to react
 
     const key = `${postId}-${emoji}`;
 
@@ -210,9 +211,8 @@ export default function PostPage() {
     const currentReaction = currentPost?.reactions?.find(
       (r) => r.emoji === emoji
     );
-    const isTogglingOff = currentReaction?.users.map(String).includes(userId);
     // If the user's ID is currently in the reaction list, this click is a REMOVE (true).
-    // Otherwise, it's an ADD (false).
+    const isTogglingOff = currentReaction?.users.map(String).includes(userId);
 
     // ✅ Optimistic UI update
     setPosts((prevPosts) =>
@@ -224,6 +224,7 @@ export default function PostPage() {
 
         // The toggling logic here is now ONLY for the UI update
         if (idx === -1) {
+          // ADD
           reactions.push({ emoji, users: [userId] });
         } else {
           const usersSet = new Set(reactions[idx].users.map(String));
@@ -235,14 +236,25 @@ export default function PostPage() {
 
           const arr = Array.from(usersSet);
           if (arr.length === 0) {
-            reactions.splice(idx, 1);
+            reactions.splice(idx, 1); // remove reaction object if empty
           } else {
             reactions[idx].users = arr;
           }
         }
 
         const normalized = normalizeReactions(reactions);
-        return { ...p, reactions: normalized };
+
+        // 🔑 Critical Change: Ensure createdBy object is preserved/restored during optimistic update
+        const createdByObject =
+          typeof p.createdBy === "string"
+            ? { _id: p.createdBy, username: MOCK_USERNAME } // Fallback to mock username if only ID exists
+            : p.createdBy;
+
+        return {
+          ...p,
+          reactions: normalized,
+          createdBy: createdByObject, // Preserve the rich createdBy object
+        };
       })
     );
 
@@ -256,13 +268,16 @@ export default function PostPage() {
         }
       }
     } catch (err) {
-      // ... (omitted error handling) ...
+      // In a real app, you would rollback the optimistic change here.
+      console.error(
+        "Error reacting to post. UI might be temporarily out of sync.",
+        err
+      );
     } finally {
       reacting.current.delete(key);
       setShowPickerFor(null);
     }
   }
-
   // ----------------------
   // Start editing
   // ----------------------
@@ -275,20 +290,20 @@ export default function PostPage() {
   // Render
   // ----------------------
   return (
-    <div className="min-h-screen bg-[#0a0f1f] text-white p-10">
-      <h1 className="text-4xl font-bold mb-6">Posts</h1>
+    <div className="min-h-screen bg-slate-900 text-white p-6 md:p-10">
+      <h1 className="text-4xl font-bold mb-6 text-cyan-400">Posts</h1>
 
       {/* Create */}
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-2 mb-8">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-8">
         <textarea
           placeholder="Write something..."
           value={newContent}
           onChange={(e) => setNewContent(e.target.value)}
-          className="w-full md:w-full p-3 bg-[#1a1f2f] rounded-lg text-white focus:outline-none resize-none"
+          className="w-full md:w-full p-4 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500 resize-none"
         />
         <button
           onClick={handleCreatePost}
-          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition"
+          className="bg-cyan-600 hover:bg-cyan-700 px-6 py-2 rounded-lg transition shrink-0 font-semibold"
         >
           + Post
         </button>
@@ -301,26 +316,34 @@ export default function PostPage() {
           return (
             <div
               key={post._id}
-              className="bg-[#1a1f2f] p-5 rounded-xl shadow-md hover:shadow-lg transition relative"
+              className="bg-slate-800 p-5 rounded-xl shadow-lg border border-slate-700/50 hover:shadow-xl transition relative"
             >
               {editingPostId === post._id ? (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3">
                   <textarea
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
-                    className="w-full p-2 bg-[#2a2f3f] rounded-lg text-white focus:outline-none"
+                    className="w-full p-3 bg-slate-700 rounded-lg text-white focus:outline-none border border-slate-600 resize-none"
                   />
-                  <button
-                    onClick={() => handleUpdatePost(post._id)}
-                    className="bg-green-600 px-3 py-1 rounded hover:bg-green-700 transition"
-                  >
-                    Save
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleUpdatePost(post._id)}
+                      className="bg-green-600 px-3 py-1 rounded-lg hover:bg-green-700 transition font-medium"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingPostId(null)}
+                      className="bg-gray-500 px-3 py-1 rounded-lg hover:bg-gray-600 transition font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>
-                  <p className="text-lg">{post.content}</p>
-                  <small className="block text-gray-400 mt-2">
+                  <p className="text-lg leading-relaxed">{post.content}</p>
+                  <small className="block text-gray-400 mt-3 font-mono">
                     By:{" "}
                     {typeof post.createdBy === "string"
                       ? post.createdBy
@@ -331,16 +354,16 @@ export default function PostPage() {
 
               {/* owner controls: compare normalized owner id to logged-in user id */}
               {userId && ownerId && userId === String(ownerId) && (
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-4 pt-3 border-t border-slate-700">
                   <button
                     onClick={() => startEdit(post)}
-                    className="bg-yellow-600 text-white px-3 py-1 rounded-lg hover:bg-yellow-700 flex items-center"
+                    className="bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700 flex items-center transition"
                   >
                     ✏️ Edit
                   </button>
                   <button
                     onClick={() => handleDeletePost(post._id)}
-                    className="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 flex items-center"
+                    className="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 flex items-center transition"
                   >
                     🗑 Delete
                   </button>
@@ -358,8 +381,8 @@ export default function PostPage() {
 
                   // 🎯 Conditional styling for the active reaction
                   const buttonClass = userHasReacted
-                    ? "bg-blue-600 text-white px-3 py-1 rounded-full hover:bg-blue-700 transition flex items-center gap-2 shadow-lg" // Active blue style
-                    : "bg-[#2a2f3f] px-3 py-1 rounded-full hover:bg-[#3a3f4f] transition flex items-center gap-2"; // Default dark style
+                    ? "bg-cyan-600 text-white px-3 py-1 rounded-full hover:bg-cyan-700 transition flex items-center gap-2 shadow-lg ring-2 ring-cyan-500/50" // Active cyan style
+                    : "bg-slate-700/50 px-3 py-1 rounded-full hover:bg-slate-700 transition flex items-center gap-2"; // Default dark style
 
                   return (
                     <button
@@ -372,8 +395,8 @@ export default function PostPage() {
                       <span>{r.emoji}</span>
                       {/* Count text is white when active (for contrast) and gray when inactive */}
                       <span
-                        className={`text-sm ${
-                          userHasReacted ? "text-white" : "text-gray-400"
+                        className={`text-sm font-semibold ${
+                          userHasReacted ? "text-white" : "text-gray-300"
                         }`}
                       >
                         {count}
@@ -389,7 +412,7 @@ export default function PostPage() {
                         showPickerFor === post._id ? null : post._id
                       )
                     }
-                    className="bg-[#2a2f3f] px-3 py-1 rounded-full hover:bg-[#3a3f4f] transition"
+                    className="bg-slate-700/50 px-3 py-1 rounded-full hover:bg-slate-700 transition font-medium"
                     title="Add reaction"
                   >
                     + 😀
@@ -399,7 +422,7 @@ export default function PostPage() {
                 )}
 
                 {showPickerFor === post._id && (
-                  <div className="absolute left-0 top-10 z-10 bg-[#1a1f2f] p-2 rounded-xl shadow-lg flex flex-wrap max-w-[260px]">
+                  <div className="absolute left-0 top-12 z-10 bg-slate-800 border border-cyan-500/30 p-2 rounded-xl shadow-2xl flex flex-wrap max-w-[260px] transform transition-all duration-300">
                     {availableEmojis.length > 0 ? (
                       availableEmojis.map((e) => {
                         const symbol =
@@ -416,7 +439,7 @@ export default function PostPage() {
                             aria-label={`React with ${symbol}`}
                             className="inline-flex items-center justify-center text-[26px] leading-none m-1 p-1.5 rounded-md transition transform hover:scale-110 focus:scale-110 focus:outline-none"
                           >
-                            <span className="inline-block w-10 h-10 rounded-md items-center justify-center bg-[#2a2f3f] text-white">
+                            <span className="inline-block w-10 h-10 rounded-lg flex items-center justify-center bg-slate-700 hover:bg-slate-600 transition">
                               {symbol}
                             </span>
                           </button>
