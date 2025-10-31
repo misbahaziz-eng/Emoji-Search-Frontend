@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import "../index.css";
 import type { EmojiItem } from "../types";
 import { useDebounce } from "../hooks/useDebounce";
-import Fuse from "fuse.js";
-import type { IFuseOptions } from "fuse.js";
+// import Fuse from "fuse.js";
+// import type { IFuseOptions } from "fuse.js";
 import {
   getEmojis,
   getFavorites,
@@ -61,19 +61,25 @@ export default function EmojiSearchPage() {
     }
   };
 
-  const fuse = useMemo(() => {
-    const options: IFuseOptions<EmojiItem> = {
-      keys: ["name", "keywords", "slug"],
-      threshold: 0.34,
-      includeScore: true,
-    };
-    return new Fuse(emojis, options);
-  }, [emojis]);
+  // const fuse = useMemo(() => {
+  //   const options: IFuseOptions<EmojiItem> = {
+  //     keys: ["name", "keywords", "slug"],
+  //     threshold: 0.34,
+  //     includeScore: true,
+  //   };
+
+  //   return new Fuse(emojis, options);
+  // }, [emojis]);
 
   const searchResults = useMemo(() => {
     if (!debouncedQ) return emojis;
-    return fuse.search(debouncedQ).map((r) => r.item);
-  }, [debouncedQ, fuse, emojis]);
+
+    const lowerCaseQ = debouncedQ.toLowerCase();
+
+    return emojis.filter((emoji) => {
+      return emoji.name.toLowerCase().startsWith(lowerCaseQ);
+    });
+  }, [debouncedQ, emojis]);
 
   const displayedEmojis = useMemo(() => {
     if (showFavorites && favorites.size === 0) return [];

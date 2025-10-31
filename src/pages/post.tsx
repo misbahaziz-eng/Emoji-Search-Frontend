@@ -247,7 +247,7 @@ export default function PostPage() {
         // 🔑 Critical Change: Ensure createdBy object is preserved/restored during optimistic update
         const createdByObject =
           typeof p.createdBy === "string"
-            ? { _id: p.createdBy, username: MOCK_USERNAME } // Fallback to mock username if only ID exists
+            ? { _id: p.createdBy, username: "username" } // Fallback to mock username if only ID exists
             : p.createdBy;
 
         return {
@@ -303,7 +303,9 @@ export default function PostPage() {
         />
         <button
           onClick={handleCreatePost}
-          className="bg-cyan-600 hover:bg-cyan-700 px-6 py-2 rounded-lg transition shrink-0 font-semibold"
+          // Added h-full to make the button match the height of the textarea
+          // Added shrink-0 to prevent the button from shrinking on small screens
+          className="bg-sky-600 hover:bg-sky-700 px-6 py-2 rounded-lg transition shrink-0 font-semibold text-white shadow-md h-full"
         >
           + Post
         </button>
@@ -352,24 +354,6 @@ export default function PostPage() {
                 </>
               )}
 
-              {/* owner controls: compare normalized owner id to logged-in user id */}
-              {userId && ownerId && userId === String(ownerId) && (
-                <div className="flex gap-2 mt-4 pt-3 border-t border-slate-700">
-                  <button
-                    onClick={() => startEdit(post)}
-                    className="bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700 flex items-center transition"
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeletePost(post._id)}
-                    className="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 flex items-center transition"
-                  >
-                    🗑 Delete
-                  </button>
-                </div>
-              )}
-
               {/* reactions */}
               <div className="mt-4 flex items-center gap-3 flex-wrap relative">
                 {post.reactions?.map((r, i) => {
@@ -381,8 +365,8 @@ export default function PostPage() {
 
                   // 🎯 Conditional styling for the active reaction
                   const buttonClass = userHasReacted
-                    ? "bg-cyan-600 text-white px-3 py-1 rounded-full hover:bg-cyan-700 transition flex items-center gap-2 shadow-lg ring-2 ring-cyan-500/50" // Active cyan style
-                    : "bg-slate-700/50 px-3 py-1 rounded-full hover:bg-slate-700 transition flex items-center gap-2"; // Default dark style
+                    ? "bg-sky-600 text-white px-3 py-1 rounded-full hover:bg-sky-700 transition flex items-center gap-2 shadow-lg ring-2 ring-sky-500/50" // Active sky style
+                    : "bg-slate-200 px-3 py-1 rounded-full hover:bg-slate-300 transition flex items-center gap-2 text-gray-700"; // Default light style
 
                   return (
                     <button
@@ -396,7 +380,7 @@ export default function PostPage() {
                       {/* Count text is white when active (for contrast) and gray when inactive */}
                       <span
                         className={`text-sm font-semibold ${
-                          userHasReacted ? "text-white" : "text-gray-300"
+                          userHasReacted ? "text-white" : "text-slate-600"
                         }`}
                       >
                         {count}
@@ -412,17 +396,17 @@ export default function PostPage() {
                         showPickerFor === post._id ? null : post._id
                       )
                     }
-                    className="bg-slate-700/50 px-3 py-1 rounded-full hover:bg-slate-700 transition font-medium"
+                    className="bg-slate-200 px-3 py-1 rounded-full hover:bg-slate-300 transition font-medium text-gray-700 shadow-sm"
                     title="Add reaction"
                   >
                     + 😀
                   </button>
                 ) : (
-                  <p className="text-sm text-gray-500">Login to react</p>
+                  <p className="text-sm text-slate-500">Login to react</p>
                 )}
 
                 {showPickerFor === post._id && (
-                  <div className="absolute left-0 top-12 z-10 bg-slate-800 border border-cyan-500/30 p-2 rounded-xl shadow-2xl flex flex-wrap max-w-[260px] transform transition-all duration-300">
+                  <div className="absolute left-0 top-12 z-10 bg-white border border-sky-300 p-2 rounded-xl shadow-2xl flex flex-wrap max-w-[260px] transform transition-all duration-300">
                     {availableEmojis.length > 0 ? (
                       availableEmojis.map((e) => {
                         const symbol =
@@ -439,18 +423,42 @@ export default function PostPage() {
                             aria-label={`React with ${symbol}`}
                             className="inline-flex items-center justify-center text-[26px] leading-none m-1 p-1.5 rounded-md transition transform hover:scale-110 focus:scale-110 focus:outline-none"
                           >
-                            <span className="inline-block w-10 h-10 rounded-lg flex items-center justify-center bg-slate-700 hover:bg-slate-600 transition">
+                            <span className="inline-block w-10 h-10 rounded-lg flex items-center justify-center bg-slate-200 hover:bg-slate-300 transition">
                               {symbol}
                             </span>
                           </button>
                         );
                       })
                     ) : (
-                      <p className="text-gray-400 text-sm px-2">
+                      <p className="text-slate-500 text-sm px-2">
                         No emojis available
                       </p>
                     )}
                   </div>
+                )}
+
+                {/* owner controls: moved into the same flex row as reactions */}
+                {userId && ownerId && userId === String(ownerId) && (
+                  <>
+                    {/* Add a visible separator for clarity */}
+                    <span
+                      className="w-px h-6 bg-slate-300 mx-2"
+                      aria-hidden="true"
+                    />
+
+                    <button
+                      onClick={() => startEdit(post)}
+                      className="bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700 flex items-center transition shadow-sm font-medium text-sm"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeletePost(post._id)}
+                      className="bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 flex items-center transition shadow-sm font-medium text-sm"
+                    >
+                      🗑 Delete
+                    </button>
+                  </>
                 )}
               </div>
             </div>
